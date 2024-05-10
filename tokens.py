@@ -1,0 +1,5 @@
+LANGUAGE_KEY='71cbeb90f9f24de68e62bee1c5becbf2'
+LANGUAGE_ENDPOINT='https://pesquisati.cognitiveservices.azure.com/'
+STORAGE_CONNECTION_STRING='DefaultEndpointsProtocol=https;AccountName=pesquisati;AccountKey=0swix472C4jONz503NDSfhM2R8S4LpMgfFWomDLeUrnaUCyFw/pfFJedoFCH/P4vEi6ONq3c+cVR+ASt3z3zrw==;EndpointSuffix=core.windows.net'
+STORAGE_ACCOUNT_KEY='0swix472C4jONz503NDSfhM2R8S4LpMgfFWomDLeUrnaUCyFw/pfFJedoFCH/P4vEi6ONq3c+cVR+ASt3z3zrw=='
+BLOB_CONTAINER_NAME='arquivos'
