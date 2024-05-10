@@ -28,17 +28,18 @@ def pdf_read():
     # Iterate over all of the blobs on container
     for blob in container_client.list_blobs():
         blob_name = blob.name
-        blob_client = blob_service_client.get_blob_client(container=BLOB_CONTAINER_NAME, blob=blob_name)
+        if blob_name in ['resumao.pdf']:
+            blob_client = blob_service_client.get_blob_client(container=BLOB_CONTAINER_NAME, blob=blob_name)
 
-        # Download PDF from Blob Storage
-        with open(TEMP_PDF, "ab") as download_file:
-            download_file.write(blob_client.download_blob().readall())
+            # Download PDF from Blob Storage
+            with open(TEMP_PDF, "ab") as download_file:
+                download_file.write(blob_client.download_blob().readall())
 
-        # Read and extract the text from PDF
-        with open(TEMP_PDF, "rb") as file:
-            reader = PyPDF2.PdfReader(file)
-            for page in range(len(reader.pages)):
-                text += reader.pages[page].extract_text()
+            # Read and extract the text from PDF
+            with open(TEMP_PDF, "rb") as file:
+                reader = PyPDF2.PdfReader(file)
+                for page in range(len(reader.pages)):
+                    text += reader.pages[page].extract_text()
 
     return text
 
@@ -53,7 +54,7 @@ def authenticate_client():
     return text_analytics_client
 
 
-def document_analysis(client, text):
+def document_analysis(client, text, print_text):
     documents = [text]
 
     poller = client.begin_analyze_actions(
@@ -67,7 +68,7 @@ def document_analysis(client, text):
     )
     document_results = poller.result()
 
-    for doc, action_results in zip(documents, document_results, print_text):
+    for doc, action_results in zip(documents, document_results):
         if print_text:
             print(f"\nDocument text: {doc}")
         for result in action_results:
