@@ -202,7 +202,7 @@ def question_answer(ta_client, qa_client, text):
 
         if user_question.lower() == 'sair':
             break
-        
+
         question = [user_question]
         response = ta_client.extract_key_phrases(question)
         key_phrases = response[0].key_phrases
