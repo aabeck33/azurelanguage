@@ -5,13 +5,15 @@ from azure.ai.textanalytics import (
         ExtractiveSummaryAction
     )
 from azure.core.credentials import AzureKeyCredential
-from azure.storage.blob import BlobServiceClient
+from azure.storage.blob import BlobServiceClient, Services
+from azure.search.documents import SearchClient
 import pypdf as PyPDF2
 import os
-from tokens import LANGUAGE_KEY, LANGUAGE_ENDPOINT, STORAGE_CONNECTION_STRING, BLOB_CONTAINER_NAME
+from tokens import  LANGUAGE_KEY, LANGUAGE_ENDPOINT, STORAGE_CONNECTION_STRING, BLOB_CONTAINER_NAME, SEARCH_SERVICE_NAME, SEARCH_INDEX_NAME, SEARCH_API_KEY
 
 
 TEMP_PDF='temp.pdf'
+
 
 def cleanning():
     os.remove(TEMP_PDF)
@@ -45,13 +47,24 @@ def pdf_read():
 
 
 # Authenticate the client using your key and endpoint
-def authenticate_client():
-    ta_credential = AzureKeyCredential(LANGUAGE_KEY)
-    text_analytics_client = TextAnalyticsClient(
-            endpoint=LANGUAGE_ENDPOINT, 
-            credential=ta_credential)
+def authenticate_client(servicetype):
+    credential = AzureKeyCredential(LANGUAGE_KEY)
 
-    return text_analytics_client
+    if servicetype == 'textanalytics':
+        language_service_client = TextAnalyticsClient(
+            endpoint=LANGUAGE_ENDPOINT, 
+            credential=credential)
+    elif servicetype == 'searchdoc':
+        language_service_client = SearchClient(
+            #service_name=SEARCH_SERVICE_NAME, 
+            index_name=SEARCH_INDEX_NAME, 
+            #api_key=SEARCH_API_KEY,
+            endpoint='https://pesquisati.search.windows.net',
+            credential=credential)
+    else:
+        language_service_client = None
+
+    return language_service_client
 
 
 def document_analysis(client, text, print_text):
@@ -181,9 +194,41 @@ def sentiment_analysis_with_opinion_mining(client, text, detaild_report):
                 ))
 
 
+def question_answer(ta_client, qa_client, text):
+    documents = [text]
+
+    while True:
+        user_question = input("Por favor, digite sua pergunta ou 'sair' para terminar: ")
+
+        if user_question.lower() == 'sair':
+            break
+        
+        question = [user_question]
+        response = ta_client.extract_key_phrases(question)
+        key_phrases = response[0].key_phrases
+
+        for phrase in key_phrases:
+            try:
+                results = qa_client.search(search_text=phrase)
+
+                if len(list(results)) > 0:
+                    for result in results:
+                        print(f"A resposta para '{user_question}' pode estar no documento \"{result['metadata_storage_name']}\".")
+                else:
+                    print('Nenhum dados foi encontrado.')
+            except Exception as e:
+                print(f"Ocorreu um erro: {e}")
+
+
 if __name__ == '__main__':
-    client = authenticate_client()
+    ta_client = authenticate_client(servicetype='textanalytics')
+    qa_client = authenticate_client(servicetype='searchdoc')
+
     text = pdf_read()
-    #sentiment_analysis_with_opinion_mining(client, text, detaild_report=False)
-    document_analysis(client, text, print_text=False)
+    
+    #sentiment_analysis_with_opinion_mining(ta_client, text, detaild_report=False)
+    #document_analysis(ta_client, text, print_text=False)
+
+    question_answer(ta_client, qa_client, text)
+
     cleanning()
